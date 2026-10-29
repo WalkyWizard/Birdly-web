@@ -1,11 +1,11 @@
-﻿.app-container {
+.app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
 .navbar {
-  background-color: #24292f;
+  background-color: #cf222e;
   color: #ffffff;
   padding: 10px 24px;
   display: flex;
@@ -34,7 +34,8 @@
 
 .nav-button {
   background: transparent;
-  color: #d0d7de;
+  color: #ffffff;
+  opacity: 0.9;
   border: 1px solid transparent;
   padding: 6px 12px;
   border-radius: 6px;
@@ -43,14 +44,15 @@
 }
 
 .nav-button:hover {
-  background-color: #32383f;
+  background-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
 .nav-button.active {
   background-color: #ffffff;
-  color: #24292f;
+  color: #cf222e;
   font-weight: 600;
+  opacity: 1;
 }
 
 .main-content {
