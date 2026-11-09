@@ -1,4 +1,4 @@
-﻿import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { analyzeImage } from '../services/api'
 import type { ImageAnalysisResponse } from '../types'
 import { BirdInfoCard } from './BirdInfoCard'
@@ -57,7 +57,7 @@ export function ImageAnalysisView() {
         <h2>Фотоаналіз</h2>
       </div>
 
-      <div className="grid-two-columns">
+      <div className="analysis-vertical-layout">
         <div className="panel">
           <form onSubmit={handleSubmit} className="upload-form">
             <div className="form-group">
@@ -154,7 +154,7 @@ export function ImageAnalysisView() {
             </div>
           ) : (
             <div className="empty-placeholder">
-              <p>Оберіть зображення ліворуч та натисніть кнопку Виконати аналіз</p>
+              <p>Оберіть зображення вище та натисніть кнопку Виконати аналіз</p>
             </div>
           )}
         </div>

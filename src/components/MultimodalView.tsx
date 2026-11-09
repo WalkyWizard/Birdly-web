@@ -1,39 +1,43 @@
-﻿import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { BirdInfoCard } from './BirdInfoCard'
 import { analyzeMultimodal } from '../services/api'
 import type { MultimodalAnalysisResponse } from '../types'
-import { BirdInfoCard } from './BirdInfoCard'
 
 export function MultimodalView() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [audioPreview, setAudioPreview] = useState<string | null>(null)
+  const [result, setResult] = useState<MultimodalAnalysisResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<MultimodalAnalysisResponse | null>(null)
 
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0] || null
+    setImageFile(file)
+    setError(null)
     if (file) {
-      setImageFile(file)
       setImagePreview(URL.createObjectURL(file))
-      setError(null)
+    } else {
+      setImagePreview(null)
     }
   }
 
   function handleAudioChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0] || null
+    setAudioFile(file)
+    setError(null)
     if (file) {
-      setAudioFile(file)
       setAudioPreview(URL.createObjectURL(file))
-      setError(null)
+    } else {
+      setAudioPreview(null)
     }
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!imageFile || !audioFile) {
-      setError('Необхідно обрати обидва файли: фотографію та аудіозапис')
+      setError('Будь ласка, завантажте і фотографію, і аудіозапис')
       return
     }
 
@@ -43,12 +47,8 @@ export function MultimodalView() {
     try {
       const data = await analyzeMultimodal(imageFile, audioFile)
       setResult(data)
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Помилка виконання мультимодального аналізу')
-      }
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || err?.message || 'Помилка виконання мультимодального аналізу')
     } finally {
       setLoading(false)
     }
@@ -69,7 +69,7 @@ export function MultimodalView() {
         <h2>Мультимодальний аналіз</h2>
       </div>
 
-      <div className="grid-two-columns">
+      <div className="analysis-vertical-layout">
         <div className="panel">
           <form onSubmit={handleSubmit} className="upload-form">
             <div className="form-group">
@@ -157,15 +157,30 @@ export function MultimodalView() {
               <div className="grid-two-columns">
                 <div className="card">
                   <h4>Візуальна модель (Фото)</h4>
-                  <p><strong>Вид:</strong> {result.image_result.predicted_species}</p>
-                  <p><strong>Упевненість:</strong> {(result.image_result.confidence * 100).toFixed(2)}%</p>
+                  <div className="result-field">
+                    <span className="result-label">Визначений вид:</span>
+                    <strong className="result-value">{result.image_result.predicted_species}</strong>
+                  </div>
+                  <div className="result-field">
+                    <span className="result-label">Рівень упевненості:</span>
+                    <strong className="result-value">{(result.image_result.confidence * 100).toFixed(2)}%</strong>
+                  </div>
                 </div>
 
                 <div className="card">
                   <h4>Акустична модель (Спів)</h4>
-                  <p><strong>Вид:</strong> {result.audio_result.predicted_species}</p>
-                  <p><strong>Упевненість:</strong> {(result.audio_result.confidence * 100).toFixed(2)}%</p>
-                  <p><strong>Статус:</strong> {result.audio_result.status_description}</p>
+                  <div className="result-field">
+                    <span className="result-label">Визначений вид:</span>
+                    <strong className="result-value">{result.audio_result.predicted_species}</strong>
+                  </div>
+                  <div className="result-field">
+                    <span className="result-label">Рівень упевненості:</span>
+                    <strong className="result-value">{(result.audio_result.confidence * 100).toFixed(2)}%</strong>
+                  </div>
+                  <div className="result-field">
+                    <span className="result-label">Статус:</span>
+                    <strong className="result-value">{result.audio_result.status_description}</strong>
+                  </div>
                 </div>
               </div>
 
@@ -173,7 +188,7 @@ export function MultimodalView() {
             </div>
           ) : (
             <div className="empty-placeholder">
-              <p>Оберіть зображення та аудіофайл ліворуч і натисніть кнопку Виконати аналіз</p>
+              <p>Оберіть зображення та аудіофайл вище і натисніть кнопку Виконати аналіз</p>
             </div>
           )}
         </div>

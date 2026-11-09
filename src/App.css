@@ -32,6 +32,21 @@
   gap: 6px;
 }
 
+.navbar-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .nav-button {
   background: transparent;
   color: #ffffff;
@@ -268,11 +283,19 @@
   gap: 8px;
 }
 
-.result-species, .result-confidence {
+.analysis-vertical-layout {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2px 0;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.result-species, .result-confidence, .result-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 4px 0;
 }
 
 .result-label {
@@ -330,16 +353,27 @@
   border-radius: 4px;
   font-size: 12px;
   width: fit-content;
+  color: #000000 !important;
 }
 
 .badge-success {
   background-color: #dafbe1;
-  color: #1a7f37;
+  color: #000000 !important;
 }
 
 .badge-warning {
   background-color: #fff8c5;
-  color: #9a6700;
+  color: #000000 !important;
+}
+
+.badge-secondary {
+  background-color: #eaeef2;
+  color: #000000 !important;
+}
+
+.badge-danger {
+  background-color: #ffebe9;
+  color: #000000 !important;
 }
 
 .type-badge {
@@ -348,21 +382,22 @@
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
+  color: #000000 !important;
 }
 
 .type-image {
   background-color: #ddf4ff;
-  color: #0969da;
+  color: #000000 !important;
 }
 
 .type-audio {
   background-color: #fff8c5;
-  color: #9a6700;
+  color: #000000 !important;
 }
 
 .type-multimodal {
   background-color: #fbefff;
-  color: #8250df;
+  color: #000000 !important;
 }
 
 .facts-section, .section-block {
@@ -392,27 +427,36 @@
   border-radius: 6px;
   font-size: 13px;
   margin-top: 4px;
+  color: #000000 !important;
 }
 
 .alert-box.alert-success {
   background-color: #dafbe1;
   border: 1px solid #4ac26b;
-  color: #1a7f37;
+  color: #000000 !important;
 }
 
 .alert-box.alert-warning {
   background-color: #fff8c5;
   border: 1px solid #d4a72c;
-  color: #9a6700;
+  color: #000000 !important;
 }
 
-.note-box {
+.alert-box strong,
+.alert-box span,
+.alert-box div,
+.alert-box p {
+  color: #000000 !important;
+}
+
+.note-box,
+.note-box * {
   background-color: #f6f8fa;
   border: 1px solid #d0d7de;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;
-  color: #57606a;
+  color: #000000 !important;
   margin-top: 4px;
 }
 
@@ -524,10 +568,361 @@
   border: 1px dashed #d0d7de;
   border-radius: 6px;
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .loading-state {
   padding: 24px;
   text-align: center;
   color: #57606a;
+}
+
+.locked-feature-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 380px;
+  padding: 24px;
+}
+
+.locked-card {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 12px;
+  padding: 36px 24px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.locked-badge-icon {
+  background: #ffebe9;
+  color: #cf222e;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.locked-card h3 {
+  font-size: 18px;
+  color: #24292f;
+  margin: 0;
+}
+
+.locked-card p {
+  color: #57606a;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #24292f;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #57606a;
+}
+
+.close-btn:hover {
+  color: #24292f;
+}
+
+.subscription-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sub-status-box {
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sub-status-box h4 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #24292f;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.plan-card {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #ffffff;
+}
+
+.plan-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #24292f;
+}
+
+.plan-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0969da;
+}
+
+.plan-duration {
+  font-size: 12px;
+  color: #57606a;
+}
+
+.plan-features {
+  font-size: 12px;
+  color: #24292f;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.wallet-actions { display: flex; align-items: center; gap: 6px; }
+.wallet-modal-actions { display: flex; gap: 8px; margin-top: 6px; }
+.account-text { font-size: 11px; word-break: break-all; }
+.balance-text { font-weight: 600; color: #0969da; }
+
+.cancel-sub-box { margin-top: 10px; padding: 10px; background-color: #ffebe9; border: 1px solid #ff8182; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+.sub-warning-note { font-size: 12px; color: #cf222e; font-weight: 500; }
+
+.subscription-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.subscription-account-card {
+  margin-bottom: 24px;
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.account-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eaeef2;
+  padding-bottom: 12px;
+}
+
+.account-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #24292f;
+}
+
+.account-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  color: #57606a;
+}
+
+.account-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.detail-label {
+  color: #57606a;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #24292f;
+  font-weight: 500;
+}
+
+.balance-value {
+  color: #0969da;
+  font-weight: 600;
+}
+
+.account-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #eaeef2;
+}
+
+.subscription-plans-section h3 {
+  font-size: 18px;
+  color: #24292f;
+  margin-bottom: 16px;
+}
+
+.plans-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.subscription-plans-section,
+.subscription-plans-section *,
+.plan-featured-card,
+.plan-featured-card * {
+  font-family: inherit !important;
+}
+
+.plan-featured-card {
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.plan-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-name-title {
+  margin: 0;
+  font-size: 17px;
+  color: #24292f;
+  font-weight: 600;
+}
+
+.plan-price-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price-number {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0969da;
+}
+
+.price-currency {
+  font-size: 14px;
+  font-weight: 600;
+  color: #57606a;
+}
+
+.plan-duration-badge {
+  font-size: 12px;
+  color: #000000 !important;
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.plan-benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #24292f;
+}
+
+.benefit-item {
+  position: relative;
+  padding-left: 14px;
+  font-weight: normal;
+}
+
+.benefit-item::before {
+  content: "•";
+  position: absolute;
+  left: 2px;
+  color: #1a7f37;
+  font-weight: normal;
+}
+
+.plan-card-footer {
+  margin-top: auto;
+}
+
+.btn-block {
+  width: 100%;
 }
