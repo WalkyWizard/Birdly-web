@@ -36,6 +36,25 @@ interface SubscriptionContextType {
   refreshStatus: () => Promise<void>
 }
 
+const CANDIDATE_ADDRESSES = [
+  CONTRACT_ADDRESS,
+  '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+  '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
+]
+
+async function getDeployedAddress(provider: ethers.JsonRpcProvider): Promise<string | null> {
+  for (const addr of CANDIDATE_ADDRESSES) {
+    try {
+      const code = await provider.getCode(addr)
+      if (code && code !== '0x' && code !== '0x0') {
+        return addr
+      }
+    } catch {
+    }
+  }
+  return null
+}
+
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null)
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
@@ -51,8 +70,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const fetchContractData = useCallback(async (userAddr: string) => {
     try {
       const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
-      const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, directProvider)
+      const targetAddress = await getDeployedAddress(directProvider)
+      if (!targetAddress) {
+        return
+      }
 
+      const readContract = new ethers.Contract(targetAddress, CONTRACT_ABI, directProvider)
       const rawPlans = await readContract.getPlans()
       const parsedPlans: Plan[] = rawPlans.map((p: any) => ({
         id: Number(p.id),
@@ -75,8 +98,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       const bal = await directProvider.getBalance(userAddr)
       setBalance(Number(ethers.formatEther(bal)).toFixed(4))
-    } catch (err: any) {
-      console.error(err)
+    } catch {
     }
   }, [])
 
@@ -257,9 +279,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
+      const targetAddress = (await getDeployedAddress(directProvider)) || CONTRACT_ADDRESS
       const browserProvider = new ethers.BrowserProvider(eth)
       const signer = await browserProvider.getSigner()
-      const liveContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+      const liveContract = new ethers.Contract(targetAddress, CONTRACT_ABI, signer)
 
       const nextNonce = await directProvider.getTransactionCount(account, 'pending')
 
@@ -312,9 +335,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
+      const targetAddress = (await getDeployedAddress(directProvider)) || CONTRACT_ADDRESS
       const browserProvider = new ethers.BrowserProvider(eth)
       const signer = await browserProvider.getSigner()
-      const liveContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+      const liveContract = new ethers.Contract(targetAddress, CONTRACT_ABI, signer)
 
       const nextNonce = await directProvider.getTransactionCount(account, 'pending')
 
