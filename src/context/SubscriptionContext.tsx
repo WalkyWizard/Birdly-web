@@ -42,7 +42,39 @@ const CANDIDATE_ADDRESSES = [
   '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 ]
 
-async function getDeployedAddress(provider: ethers.JsonRpcProvider): Promise<string | null> {
+const DEFAULT_PLANS: Plan[] = [
+  {
+    id: 0,
+    name: 'Birdly Pro Monthly',
+    price: 5000000000000000n,
+    duration: 2592000,
+    unlocksHistory: true,
+    unlocksMultimodal: true,
+    active: true
+  },
+  {
+    id: 1,
+    name: 'Birdly Pro Year',
+    price: 50000000000000000n,
+    duration: 31536000,
+    unlocksHistory: true,
+    unlocksMultimodal: true,
+    active: true
+  }
+]
+
+async function getProvider(): Promise<any> {
+  if (typeof window !== 'undefined' && (window as any).ethereum) {
+    try {
+      return new ethers.BrowserProvider((window as any).ethereum)
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
+async function getDeployedAddress(provider: any): Promise<string | null> {
   for (const addr of CANDIDATE_ADDRESSES) {
     try {
       const code = await provider.getCode(addr)
@@ -60,7 +92,7 @@ const SubscriptionContext = createContext<SubscriptionContextType | null>(null)
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null)
   const [balance, setBalance] = useState<string>('0')
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [plans, setPlans] = useState<Plan[]>(DEFAULT_PLANS)
   const [status, setStatus] = useState<SubscriptionStatus | null>(null)
   const [pendingPlanId, setPendingPlanId] = useState<number | null>(null)
   const [isCancelling, setIsCancelling] = useState<boolean>(false)
@@ -69,35 +101,50 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const fetchContractData = useCallback(async (userAddr: string) => {
     try {
-      const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
-      const targetAddress = await getDeployedAddress(directProvider)
+      const provider = await getProvider()
+      if (!provider) {
+        return
+      }
+      const block = await provider.getBlockNumber().catch(() => null)
+      if (block === null) {
+        return
+      }
+      const targetAddress = (await getDeployedAddress(provider)) || CONTRACT_ADDRESS
       if (!targetAddress) {
         return
       }
 
-      const readContract = new ethers.Contract(targetAddress, CONTRACT_ABI, directProvider)
-      const rawPlans = await readContract.getPlans()
-      const parsedPlans: Plan[] = rawPlans.map((p: any) => ({
-        id: Number(p.id),
-        name: p.name,
-        price: p.price,
-        duration: Number(p.duration),
-        unlocksHistory: p.unlocksHistory,
-        unlocksMultimodal: p.unlocksMultimodal,
-        active: p.active
-      }))
-      setPlans(parsedPlans)
+      const readContract = new ethers.Contract(targetAddress, CONTRACT_ABI, provider)
+      const rawPlans = await readContract.getPlans().catch(() => null)
+      if (rawPlans && rawPlans.length > 0) {
+        const parsedPlans: Plan[] = rawPlans.map((p: any) => ({
+          id: Number(p.id),
+          name: p.name,
+          price: p.price,
+          duration: Number(p.duration),
+          unlocksHistory: p.unlocksHistory,
+          unlocksMultimodal: p.unlocksMultimodal,
+          active: p.active
+        }))
+        setPlans(parsedPlans)
+      }
 
-      const subStatus = await readContract.getSubscriptionStatus(userAddr)
-      setStatus({
-        hasHistory: Boolean(subStatus[0]),
-        historyExpiresAt: Number(subStatus[1]),
-        hasMultimodal: Boolean(subStatus[2]),
-        multimodalExpiresAt: Number(subStatus[3])
-      })
+      const subStatus = await readContract.getSubscriptionStatus(userAddr).catch(() => null)
+      if (subStatus) {
+        setStatus({
+          hasHistory: Boolean(subStatus[0]),
+          historyExpiresAt: Number(subStatus[1]),
+          hasMultimodal: Boolean(subStatus[2]),
+          multimodalExpiresAt: Number(subStatus[3])
+        })
+      }
 
-      const bal = await directProvider.getBalance(userAddr)
-      setBalance(Number(ethers.formatEther(bal)).toFixed(4))
+      if (typeof provider.getBalance === 'function') {
+        const bal = await provider.getBalance(userAddr).catch(() => null)
+        if (bal !== null) {
+          setBalance(Number(ethers.formatEther(bal)).toFixed(4))
+        }
+      }
     } catch {
     }
   }, [])
@@ -117,7 +164,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     try {
       const chainId = await eth.request({ method: 'eth_chainId' })
       if (chainId === '0x7a69') return true
-
       try {
         await eth.request({
           method: 'wallet_switchEthereumChain',
@@ -141,8 +187,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         }
         return false
       }
-    } catch (err: any) {
-      console.error(err)
+    } catch {
       return false
     }
   }
@@ -187,13 +232,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, [handleInit, account, fetchContractData])
 
-  useEffect(() => {
-    if (!account) return
-    const timer = setInterval(() => {
-      fetchContractData(account)
-    }, 2500)
-    return () => clearInterval(timer)
-  }, [account, fetchContractData])
+
 
   async function connectWallet() {
     if (typeof window === 'undefined' || !(window as any).ethereum) {
@@ -278,21 +317,33 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         throw new Error('Будь ласка перемкніть мережу в MetaMask на Anvil Localhost 31337')
       }
 
-      const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
-      const targetAddress = (await getDeployedAddress(directProvider)) || CONTRACT_ADDRESS
       const browserProvider = new ethers.BrowserProvider(eth)
       const signer = await browserProvider.getSigner()
+      const targetAddress = (await getDeployedAddress(browserProvider)) || CONTRACT_ADDRESS
       const liveContract = new ethers.Contract(targetAddress, CONTRACT_ABI, signer)
 
-      const nextNonce = await directProvider.getTransactionCount(account, 'pending')
+      let nextNonce: number | undefined = undefined
+      try {
+        nextNonce = await browserProvider.getTransactionCount(account, 'latest')
+      } catch {
+      }
 
-      const tx = await liveContract.subscribe(planId, {
+      const txOptions: any = {
         value: price,
-        gasLimit: 250000n,
-        nonce: nextNonce
-      })
+        gasLimit: 250000n
+      }
+      if (nextNonce !== undefined) {
+        txOptions.nonce = nextNonce
+      }
 
-      const receipt = await directProvider.waitForTransaction(tx.hash, 1, 15000)
+      const tx = await liveContract.subscribe(planId, txOptions)
+
+      const receipt = await Promise.race([
+        tx.wait(1),
+        new Promise<any>((_, reject) =>
+          setTimeout(() => reject(new Error('Час очікування вичерпано Якщо транзакція зависла скиньте чергу в MetaMask: Налаштування -> Додатково -> Очистити дані дій')), 15000)
+        )
+      ])
       if (!receipt || receipt.status !== 1) {
         throw new Error('Транзакція не була підтверджена мережею')
       }
@@ -303,8 +354,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const msg = err?.reason || err?.message || ''
       if (err?.code === 4001 || msg.includes('user rejected') || msg.includes('ACTION_REJECTED')) {
         setError('Транзакцію скасовано у MetaMask')
-      } else if (err?.code === -32002) {
-        setError('Запит у MetaMask вже відкрито Перевірте вікно MetaMask')
+      } else if (msg.includes('RPC endpoint returned too many errors') || msg.includes('coalesce error')) {
+        setError('MetaMask тимчасово призупинив запити до локальної мережі Зачекайте 10-15 секунд або очистіть дані дій у MetaMask')
+      } else if (err?.code === -32002 || msg.includes('-32002')) {
+        setError('Запит у MetaMask вже відкрито або мережа відновлюється Перевірте вікно MetaMask')
       } else if (msg.includes('SubscriptionAlreadyActive')) {
         setError('У вас вже є активна підписка Щоб змінити план спочатку скасуйте її')
       } else if (msg.includes('insufficient funds')) {
@@ -334,20 +387,32 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         throw new Error('Будь ласка перемкніть мережу в MetaMask на Anvil Localhost 31337')
       }
 
-      const directProvider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
-      const targetAddress = (await getDeployedAddress(directProvider)) || CONTRACT_ADDRESS
       const browserProvider = new ethers.BrowserProvider(eth)
       const signer = await browserProvider.getSigner()
+      const targetAddress = (await getDeployedAddress(browserProvider)) || CONTRACT_ADDRESS
       const liveContract = new ethers.Contract(targetAddress, CONTRACT_ABI, signer)
 
-      const nextNonce = await directProvider.getTransactionCount(account, 'pending')
+      let nextNonce: number | undefined = undefined
+      try {
+        nextNonce = await browserProvider.getTransactionCount(account, 'latest')
+      } catch {
+      }
 
-      const tx = await liveContract.cancelSubscription({
-        gasLimit: 150000n,
-        nonce: nextNonce
-      })
+      const txOptions: any = {
+        gasLimit: 150000n
+      }
+      if (nextNonce !== undefined) {
+        txOptions.nonce = nextNonce
+      }
 
-      const receipt = await directProvider.waitForTransaction(tx.hash, 1, 15000)
+      const tx = await liveContract.cancelSubscription(txOptions)
+
+      const receipt = await Promise.race([
+        tx.wait(1),
+        new Promise<any>((_, reject) =>
+          setTimeout(() => reject(new Error('Час очікування вичерпано Якщо транзакція зависла скиньте чергу в MetaMask: Налаштування -> Додатково -> Очистити дані дій')), 15000)
+        )
+      ])
       if (!receipt || receipt.status !== 1) {
         throw new Error('Помилка підтвердження скасування в мережі')
       }
@@ -358,8 +423,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const msg = err?.reason || err?.message || ''
       if (err?.code === 4001 || msg.includes('user rejected') || msg.includes('ACTION_REJECTED')) {
         setError('Скасування відхилено у MetaMask')
-      } else if (err?.code === -32002) {
-        setError('Запит у MetaMask вже відкрито Перевірте вікно MetaMask')
+      } else if (msg.includes('RPC endpoint returned too many errors') || msg.includes('coalesce error')) {
+        setError('MetaMask тимчасово призупинив запити до локальної мережі Зачекайте 10-15 секунд або очистіть дані дій у MetaMask')
+      } else if (err?.code === -32002 || msg.includes('-32002')) {
+        setError('Запит у MetaMask вже відкрито або мережа відновлюється Перевірте вікно MetaMask')
       } else {
         setError(msg || 'Помилка скасування підписки')
       }

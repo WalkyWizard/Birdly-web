@@ -107,50 +107,67 @@ export function ImageAnalysisView() {
         <div className="panel">
           {result ? (
             <div className="results-container">
-              <div className="card">
-                <h3>Результат розпізнавання</h3>
-                <div className="result-main-info">
-                  <div className="result-species">
-                    <span className="result-label">Визначений вид:</span>
-                    <strong className="result-value">{result.predicted_species}</strong>
+              {result.predicted_species === 'Нічого не знайдено' ? (
+                <div className="card">
+                  <h3>Результат розпізнавання</h3>
+                  <div className="result-main-info">
+                    <div className="result-species">
+                      <span className="result-label">Визначений вид:</span>
+                      <strong className="result-value">Нічого не знайдено</strong>
+                    </div>
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <span className="badge badge-warning">На зображенні не виявлено птаха</span>
+                    </div>
                   </div>
-                  <div className="result-confidence">
-                    <span className="result-label">Рівень упевненості:</span>
-                    <strong className="result-value">{(result.confidence * 100).toFixed(2)}%</strong>
+                </div>
+              ) : (
+                <>
+                  <div className="card">
+                    <h3>Результат розпізнавання</h3>
+                    <div className="result-main-info">
+                      <div className="result-species">
+                        <span className="result-label">Визначений вид:</span>
+                        <strong className="result-value">{result.predicted_species}</strong>
+                      </div>
+                      <div className="result-confidence">
+                        <span className="result-label">Рівень упевненості:</span>
+                        <strong className="result-value">{(result.confidence * 100).toFixed(2)}%</strong>
+                      </div>
+                      {result.record_id && (
+                        <div className="result-saved">
+                          <span className="badge badge-success">Збережено в базі даних (ID: {result.record_id})</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {result.record_id && (
-                    <div className="result-saved">
-                      <span className="badge badge-success">Збережено в базі даних (ID: {result.record_id})</span>
+
+                  {result.variants && result.variants.length > 0 && (
+                    <div className="card">
+                      <h4>Найбільш імовірні варіанти</h4>
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>№</th>
+                            <th>Назва виду</th>
+                            <th>Упевненість</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {result.variants.map((v, index) => (
+                            <tr key={index}>
+                              <td>{index + 1}</td>
+                              <td>{v.species}</td>
+                              <td>{(v.confidence * 100).toFixed(2)}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
-                </div>
-              </div>
 
-              {result.variants && result.variants.length > 0 && (
-                <div className="card">
-                  <h4>Найбільш імовірні варіанти</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>№</th>
-                        <th>Назва виду</th>
-                        <th>Упевненість</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {result.variants.map((v, index) => (
-                        <tr key={index}>
-                          <td>{index + 1}</td>
-                          <td>{v.species}</td>
-                          <td>{(v.confidence * 100).toFixed(2)}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  <BirdInfoCard info={result.bird_info} />
+                </>
               )}
-
-              <BirdInfoCard info={result.bird_info} />
             </div>
           ) : (
             <div className="empty-placeholder">
